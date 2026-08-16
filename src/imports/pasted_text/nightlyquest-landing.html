@@ -1,0 +1,714 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NightlyQuest — A bedtime quest where your child is the hero, delivered by email</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,400;1,9..144,500;1,9..144,600&family=Hanken+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --night-1:#060a1c;--night-2:#0c1334;--night-3:#131c48;--indigo:#2a3470;
+    --gold:#f5c45e;--gold-lt:#fcd676;--gold-deep:#e0a23f;--amber-glow:rgba(245,196,94,.35);
+    --cream:#f7f0e3;--cream-dim:#c9c2b7;--lavender:#bcb9ec;--rose:#e8a3a3;
+    --display:"Fraunces",Georgia,serif;--body:"Hanken Grotesk",system-ui,sans-serif;
+    --ease:cubic-bezier(.16,1,.3,1);
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{font-family:var(--body);background:var(--night-1);color:var(--cream);overflow-x:hidden;line-height:1.6;-webkit-font-smoothing:antialiased}
+  ::selection{background:var(--gold);color:var(--night-1)}
+  a{color:inherit}
+  :focus-visible{outline:2px solid var(--gold);outline-offset:3px;border-radius:6px}
+
+  /* atmosphere */
+  .sky{position:fixed;inset:0;z-index:-3;background:
+    radial-gradient(ellipse 70% 50% at 78% 4%, rgba(245,196,94,.12), transparent 58%),
+    radial-gradient(ellipse 90% 70% at 12% 102%, rgba(188,185,236,.14), transparent 55%),
+    radial-gradient(ellipse 120% 90% at 50% 50%, rgba(42,52,112,.25), transparent 70%),
+    linear-gradient(180deg, var(--night-1) 0%, var(--night-2) 50%, var(--night-3) 100%);}
+  .horizon{position:fixed;left:0;right:0;bottom:0;height:40vh;z-index:-3;pointer-events:none;
+    background:radial-gradient(ellipse 90% 100% at 50% 130%, rgba(245,196,94,.10), rgba(188,185,236,.05) 40%, transparent 70%);}
+  .grain{position:fixed;inset:0;z-index:1;pointer-events:none;opacity:.045;mix-blend-mode:overlay;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");}
+  .stars{position:fixed;inset:0;z-index:-2;pointer-events:none}
+  .star{position:absolute;background:#fff;border-radius:50%;animation:twinkle var(--dur) ease-in-out infinite alternate}
+  @keyframes twinkle{from{opacity:.12;transform:scale(.6)}to{opacity:1;transform:scale(1)}}
+  .shooting{position:fixed;width:2px;height:2px;background:#fff;border-radius:50%;z-index:-2;opacity:0;
+    box-shadow:0 0 0 1px rgba(255,255,255,.4);pointer-events:none}
+  .shooting::after{content:"";position:absolute;top:50%;right:0;width:90px;height:1px;
+    background:linear-gradient(90deg,#fff,transparent);transform:translateY(-50%)}
+  .firefly{position:fixed;width:4px;height:4px;border-radius:50%;z-index:-2;pointer-events:none;
+    background:var(--gold);box-shadow:0 0 8px 2px var(--amber-glow);animation:drift var(--fdur) ease-in-out infinite}
+  @keyframes drift{0%{transform:translate(0,0);opacity:0}10%{opacity:.8}50%{transform:translate(var(--dx),var(--dy));opacity:1}90%{opacity:.6}100%{transform:translate(0,0);opacity:0}}
+  .moon{position:fixed;top:5%;right:7%;width:78px;height:78px;border-radius:50%;z-index:-2;will-change:transform;
+    background:radial-gradient(circle at 35% 35%, #fff8e8, #f5e3b8 52%, #e6c97e);
+    box-shadow:0 0 50px 14px rgba(245,196,94,.2), inset -11px -7px 20px rgba(180,150,90,.42);}
+  .moon::before,.moon::after{content:"";position:absolute;border-radius:50%;background:rgba(190,160,100,.18)}
+  .moon::before{width:14px;height:14px;top:18px;left:22px;box-shadow:0 0 0 1px rgba(160,130,80,.1)}
+  .moon::after{width:9px;height:9px;bottom:19px;right:21px}
+
+  .wrap{max-width:1120px;margin:0 auto;padding:0 28px}
+  section{position:relative;z-index:2}
+  .pad{padding:94px 0}
+  .divider-stars{text-align:center;color:var(--gold);opacity:.4;font-size:1rem;letter-spacing:1em;padding:6px 0;position:relative;z-index:2}
+
+  .gold-text{background:linear-gradient(120deg,#fcd676,#f5c45e 45%,#e0a23f);-webkit-background-clip:text;background-clip:text;color:transparent;font-style:italic}
+
+  /* nav */
+  .navbar{position:sticky;top:0;z-index:50;transition:background .4s var(--ease),backdrop-filter .4s,border-color .4s,padding .4s}
+  .navbar.scrolled{background:rgba(8,12,30,.72);backdrop-filter:blur(14px);border-bottom:1px solid rgba(245,196,94,.12)}
+  nav{display:flex;justify-content:space-between;align-items:center;padding:22px 28px;max-width:1120px;margin:0 auto;transition:padding .4s var(--ease)}
+  .navbar.scrolled nav{padding:14px 28px}
+  .logo{font-family:var(--display);font-weight:600;font-size:1.4rem;letter-spacing:.3px;display:flex;align-items:center;gap:9px}
+  .logo .spark{color:var(--gold);font-size:1.05rem;animation:sparkle 3s ease-in-out infinite}
+  @keyframes sparkle{0%,100%{opacity:1;transform:rotate(0) scale(1)}50%{opacity:.6;transform:rotate(20deg) scale(1.15)}}
+  .nav-links{display:flex;align-items:center;gap:30px;font-size:.94rem;font-weight:500}
+  .nav-links a{text-decoration:none;color:var(--cream-dim);transition:color .2s;position:relative}
+  .nav-links a:not(.nav-cta)::after{content:"";position:absolute;left:0;bottom:-5px;width:0;height:1.5px;background:var(--gold);transition:width .25s var(--ease)}
+  .nav-links a:not(.nav-cta):hover{color:var(--gold)}
+  .nav-links a:not(.nav-cta):hover::after{width:100%}
+  .nav-cta{font-weight:600;font-size:.92rem;color:var(--night-1)!important;background:var(--gold);padding:11px 22px;border-radius:100px;text-decoration:none;transition:transform .25s,box-shadow .25s;box-shadow:0 6px 22px var(--amber-glow)}
+  .nav-cta:hover{transform:translateY(-2px);box-shadow:0 10px 30px var(--amber-glow)}
+
+  /* hero */
+  .hero{text-align:center;padding:78px 0 66px}
+  .eyebrow{display:inline-flex;align-items:center;gap:8px;font-size:.78rem;letter-spacing:.22em;text-transform:uppercase;color:var(--gold);font-weight:600;margin-bottom:28px;border:1px solid rgba(245,196,94,.3);padding:8px 20px;border-radius:100px;background:rgba(245,196,94,.06)}
+  .eyebrow .pulse{width:6px;height:6px;border-radius:50%;background:var(--gold);box-shadow:0 0 8px var(--gold);animation:pulse 2s ease-in-out infinite}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+  h1{font-family:var(--display);font-weight:500;font-size:clamp(2.6rem,5.8vw,4.6rem);line-height:1.04;letter-spacing:-.6px;margin-bottom:24px}
+  h1 em{font-style:italic}
+  .sub{font-size:clamp(1.05rem,2vw,1.26rem);color:var(--cream-dim);max-width:640px;margin:0 auto 14px}
+  .sub2{font-size:1rem;color:var(--cream);max-width:600px;margin:0 auto 38px;font-weight:500}
+  .signup{display:flex;gap:12px;justify-content:center;max-width:490px;margin:0 auto}
+  .signup input{flex:1;min-width:0;padding:17px 22px;border-radius:100px;border:1px solid rgba(245,196,94,.3);background:rgba(255,255,255,.06);color:var(--cream);font-family:var(--body);font-size:1rem;outline:none;transition:.25s var(--ease)}
+  .signup input::placeholder{color:var(--cream-dim)}
+  .signup input:focus{border-color:var(--gold);background:rgba(245,196,94,.09);box-shadow:0 0 0 4px rgba(245,196,94,.1)}
+  .btn-primary{position:relative;display:inline-flex;align-items:center;gap:10px;font-weight:700;font-size:1.05rem;color:var(--night-1);background:linear-gradient(135deg,var(--gold-lt),var(--gold-deep));padding:17px 32px;border-radius:100px;text-decoration:none;border:none;cursor:pointer;font-family:var(--body);box-shadow:0 14px 40px var(--amber-glow);transition:transform .25s var(--ease),box-shadow .25s;overflow:hidden;white-space:nowrap}
+  .btn-primary::before{content:"";position:absolute;top:0;left:-120%;width:60%;height:100%;background:linear-gradient(100deg,transparent,rgba(255,255,255,.5),transparent);transform:skewX(-20deg);transition:left .6s var(--ease)}
+  .btn-primary:hover{transform:translateY(-3px) scale(1.02);box-shadow:0 20px 55px var(--amber-glow)}
+  .btn-primary:hover::before{left:130%}
+  .btn-primary .arrow{transition:transform .25s var(--ease)}
+  .btn-primary:hover .arrow{transform:translateX(5px)}
+  .reassure{margin-top:18px;font-size:.9rem;color:var(--cream-dim)}
+
+  .hero-card{margin:60px auto 0;max-width:520px;text-align:left;position:relative;
+    background:linear-gradient(165deg, rgba(255,253,247,.09), rgba(255,255,255,.02));
+    border:1px solid rgba(245,196,94,.2);border-radius:22px;padding:36px 38px;backdrop-filter:blur(10px);
+    box-shadow:0 40px 90px rgba(0,0,0,.5), inset 0 1px 0 rgba(255,255,255,.08);}
+  .hero-card::before{content:"✦";position:absolute;top:-19px;left:36px;background:linear-gradient(135deg,var(--gold-lt),var(--gold-deep));color:var(--night-1);width:40px;height:40px;border-radius:50%;display:grid;place-items:center;font-size:1.05rem;box-shadow:0 8px 22px var(--amber-glow)}
+  .hc-meta{font-size:.78rem;letter-spacing:.16em;text-transform:uppercase;color:var(--gold);margin-bottom:18px;font-weight:600;display:flex;align-items:center;gap:10px}
+  .hc-meta::after{content:"";flex:1;height:1px;background:linear-gradient(90deg,rgba(245,196,94,.4),transparent)}
+  .hero-card .story-window{position:relative;max-height:236px;overflow:hidden;
+    -webkit-mask-image:linear-gradient(180deg,#000 60%,rgba(0,0,0,.3) 85%,transparent);
+    mask-image:linear-gradient(180deg,#000 60%,rgba(0,0,0,.3) 85%,transparent)}
+  .hero-card .story{font-family:var(--display);font-size:1.1rem;line-height:1.74;color:var(--cream)}
+  .hero-card .story p{margin-bottom:11px}
+  .hero-card .story p:first-child::first-letter{font-size:2.7em;line-height:.8;float:left;margin:6px 9px 0 0;color:var(--gold);font-weight:600}
+  .hero-card .story .whisper{font-style:italic;color:var(--lavender)}
+  .hc-outro{margin-top:18px;font-family:var(--display);font-size:1.06rem;line-height:1.6;color:var(--cream)}
+  .hc-outro p{margin-bottom:10px}
+  .hc-outro p:last-child{margin-bottom:0}
+  .hc-outro .opts{padding-left:2px}
+  .hc-outro b{color:var(--gold);font-weight:600}
+  .hc-outro .cta{color:var(--cream-dim);font-size:.98rem}
+  .hc-foot{margin-top:18px;font-size:.85rem;color:var(--cream-dim);text-align:center;font-style:italic}
+
+  /* email-styled hero card */
+  .hero-card.asEmail::before{display:none}
+  .email-header{display:flex;align-items:flex-start;gap:13px;padding-bottom:16px;margin-bottom:16px;border-bottom:1px solid rgba(245,196,94,.18)}
+  .email-av{flex-shrink:0;width:42px;height:42px;border-radius:50%;display:grid;place-items:center;font-size:1.05rem;background:linear-gradient(135deg,var(--gold-lt),var(--gold-deep));color:var(--night-1);font-weight:700;box-shadow:0 6px 18px var(--amber-glow)}
+  .email-meta{flex:1;min-width:0}
+  .email-from{font-size:.92rem;font-weight:600;color:var(--cream);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .email-from span{color:var(--cream-dim);font-weight:400;font-size:.82rem}
+  .email-subject{font-family:var(--display);font-size:1.02rem;color:var(--gold);margin-top:2px}
+  .email-time{font-size:.78rem;color:var(--cream-dim);flex-shrink:0;padding-top:2px}
+  .reply-wrap{margin-top:18px}
+  .reply-box{background:rgba(255,255,255,.035);border:1px solid rgba(245,196,94,.28);border-radius:14px;overflow:hidden}
+  .reply-head{display:flex;align-items:center;gap:9px;padding:11px 16px;border-bottom:1px solid rgba(255,255,255,.07);font-size:.82rem;color:var(--cream-dim)}
+  .reply-head .reply-ico{color:var(--gold);font-size:1rem}
+  .reply-head b{color:var(--cream);font-weight:600}
+  .reply-body{padding:15px 16px;min-height:48px;display:flex;align-items:flex-start;font-size:.96rem;line-height:1.5;color:var(--cream)}
+  .caret{display:inline-block;width:2px;height:18px;background:var(--gold);margin-left:1px;animation:blink 1s step-end infinite;vertical-align:middle}
+  @keyframes blink{50%{opacity:0}}
+  .reply-foot{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;border-top:1px solid rgba(255,255,255,.06);background:rgba(0,0,0,.14)}
+  .reply-send{display:inline-flex;align-items:center;gap:8px;background:linear-gradient(135deg,var(--gold-lt),var(--gold-deep));color:var(--night-1);border:none;border-radius:10px;padding:9px 18px;font-family:var(--body);font-weight:700;font-size:.88rem;cursor:pointer;transition:transform .12s var(--ease),background .25s;box-shadow:0 4px 14px var(--amber-glow)}
+  .reply-send::after{content:"➤";font-size:.78rem}
+  .reply-send.pressed{transform:scale(.9)}
+  .reply-send.done{background:rgba(245,196,94,.16);color:var(--gold);box-shadow:none;cursor:default}
+  .reply-send.done::after{content:"✓"}
+  .reply-tools{display:flex;gap:8px}
+  .reply-tools span{width:9px;height:9px;border-radius:2px;background:rgba(245,196,94,.22)}
+  .sent-msg{opacity:0;transition:opacity .45s var(--ease);margin-top:12px;text-align:center;font-size:.88rem;color:var(--gold);font-style:italic;font-family:var(--display);min-height:20px}
+  .sent-msg.show{opacity:1}
+  .sent-msg .check{display:inline-grid;place-items:center;width:17px;height:17px;border-radius:50%;background:var(--gold);color:var(--night-1);font-size:.66rem;font-weight:700;margin-right:6px;vertical-align:middle}
+
+  /* section heads */
+  .sec-head{text-align:center;max-width:700px;margin:0 auto 56px}
+  .sec-tag{font-size:.76rem;letter-spacing:.24em;text-transform:uppercase;color:var(--lavender);font-weight:600;margin-bottom:16px;display:block}
+  h2{font-family:var(--display);font-weight:500;font-size:clamp(2rem,4vw,3rem);line-height:1.12;letter-spacing:-.4px}
+  h2 em{font-style:italic}
+  .sec-head p{color:var(--cream-dim);font-size:1.08rem;margin-top:18px}
+
+  /* social proof */
+  .proof{display:grid;grid-template-columns:repeat(3,1fr);gap:22px}
+  .quote-card{background:linear-gradient(165deg, rgba(255,255,255,.055), rgba(255,255,255,.012));border:1px solid rgba(255,255,255,.08);border-radius:18px;padding:32px 30px;transition:.35s var(--ease);position:relative;overflow:hidden}
+  .quote-card::before{content:"\201C";position:absolute;top:-10px;right:18px;font-family:var(--display);font-size:5rem;color:var(--gold);opacity:.12;line-height:1}
+  .quote-card:hover{border-color:rgba(245,196,94,.35);transform:translateY(-6px);box-shadow:0 24px 50px rgba(0,0,0,.3)}
+  .stars-row{color:var(--gold);font-size:.95rem;letter-spacing:.18em;margin-bottom:16px}
+  .quote-card p{font-family:var(--display);font-size:1.1rem;line-height:1.55;font-style:italic;color:var(--cream)}
+
+  /* steps */
+  .steps{display:grid;grid-template-columns:repeat(4,1fr);gap:22px}
+  .step{background:linear-gradient(165deg, rgba(255,255,255,.06), rgba(255,255,255,.015));border:1px solid rgba(255,255,255,.08);border-radius:18px;padding:32px 26px;transition:transform .35s var(--ease),border-color .35s,box-shadow .35s}
+  .step:hover{transform:translateY(-7px);border-color:rgba(245,196,94,.35);box-shadow:0 24px 50px rgba(0,0,0,.3)}
+  .step-num{font-family:var(--display);font-style:italic;font-size:2.5rem;color:var(--gold);opacity:.5;line-height:1;margin-bottom:14px}
+  .step h3{font-family:var(--display);font-weight:600;font-size:1.22rem;margin-bottom:10px}
+  .step p{font-size:.94rem;color:var(--cream-dim)}
+  .step ul{list-style:none;margin-top:12px}
+  .step li{font-size:.9rem;color:var(--cream);padding:5px 0 5px 24px;position:relative}
+  .step li::before{content:"✓";position:absolute;left:0;color:var(--gold)}
+
+  /* editorial */
+  .editorial{max-width:770px;margin:0 auto;text-align:center}
+  .editorial .lead{font-family:var(--display);font-size:clamp(1.45rem,3vw,2.05rem);line-height:1.4;font-weight:400;color:var(--cream)}
+  .editorial .body{color:var(--cream-dim);font-size:1.1rem;margin-top:26px;max-width:620px;margin-left:auto;margin-right:auto}
+  .highlight{color:var(--lavender);font-style:italic;font-family:var(--display)}
+
+  /* difference / contrast */
+  .diff2{display:grid;grid-template-columns:1.05fr 1fr;gap:50px;align-items:center}
+  .diff2 .lead{font-family:var(--display);font-size:clamp(1.6rem,3vw,2.3rem);line-height:1.25;font-weight:400;color:var(--cream);margin-bottom:22px}
+  .diff2 .body{color:var(--cream-dim);font-size:1.08rem;margin-bottom:18px}
+  .diff2 .body:last-child{margin-bottom:0}
+  .vs-line{display:flex;align-items:center;gap:14px;margin:24px 0;font-size:.92rem}
+  .vs-line .tag{font-size:.7rem;letter-spacing:.14em;text-transform:uppercase;font-weight:700;padding:5px 12px;border-radius:100px;flex-shrink:0}
+  .vs-line.them .tag{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.15);color:var(--cream-dim)}
+  .vs-line.us .tag{background:rgba(245,196,94,.15);border:1px solid rgba(245,196,94,.4);color:var(--gold)}
+  .vs-line.them span{color:var(--cream-dim)}
+  .vs-line.us span{color:var(--cream)}
+  /* story journal */
+  .journal{background:linear-gradient(165deg, rgba(255,253,247,.07), rgba(255,255,255,.02));border:1px solid rgba(245,196,94,.22);border-radius:20px;padding:32px 34px;box-shadow:0 30px 70px rgba(0,0,0,.4);position:relative}
+  .journal::before{content:"📖";position:absolute;top:-18px;left:30px;background:linear-gradient(135deg,var(--gold-lt),var(--gold-deep));width:40px;height:40px;border-radius:50%;display:grid;place-items:center;font-size:1.1rem;box-shadow:0 8px 22px var(--amber-glow)}
+  .journal-head{font-size:.78rem;letter-spacing:.14em;text-transform:uppercase;color:var(--gold);font-weight:600;margin-bottom:20px;display:flex;align-items:center;gap:10px}
+  .journal-head::after{content:"";flex:1;height:1px;background:linear-gradient(90deg,rgba(245,196,94,.4),transparent)}
+  .journal-item{display:flex;gap:14px;padding:12px 0;border-bottom:1px solid rgba(255,255,255,.07);font-family:var(--display);font-size:1.02rem;line-height:1.45;color:var(--cream)}
+  .journal-item:last-of-type{border-bottom:none}
+  .journal-item .ji{flex-shrink:0;font-size:1.15rem;line-height:1.3}
+  .journal-item .ch{color:var(--lavender);font-style:italic;font-size:.86rem}
+  .journal-next{margin-top:18px;padding-top:16px;border-top:1px dashed rgba(245,196,94,.3);font-family:var(--display);font-style:italic;color:var(--gold);font-size:1rem;display:flex;gap:10px;align-items:baseline}
+  .journal-next .arrow{flex-shrink:0}
+
+  /* email-native section */
+  .email-native{display:grid;grid-template-columns:1fr 1fr;gap:50px;align-items:center}
+  .email-native h2{margin-bottom:18px}
+  .email-native .lede{color:var(--cream-dim);font-size:1.1rem;margin-bottom:28px}
+  .ebenefits{display:flex;flex-direction:column;gap:18px}
+  .ebenefit{display:flex;gap:16px}
+  .ebenefit .ei{flex-shrink:0;width:44px;height:44px;border-radius:12px;display:grid;place-items:center;font-size:1.3rem;background:rgba(245,196,94,.12);border:1px solid rgba(245,196,94,.25)}
+  .ebenefit h4{font-family:var(--display);font-weight:600;font-size:1.1rem;margin-bottom:3px}
+  .ebenefit p{font-size:.94rem;color:var(--cream-dim)}
+  /* inbox mockup */
+  .inbox{background:linear-gradient(165deg, rgba(255,255,255,.07), rgba(255,255,255,.02));border:1px solid rgba(255,255,255,.1);border-radius:20px;overflow:hidden;box-shadow:0 34px 80px rgba(0,0,0,.45)}
+  .inbox-bar{display:flex;align-items:center;gap:8px;padding:16px 20px;border-bottom:1px solid rgba(255,255,255,.08);background:rgba(255,255,255,.03)}
+  .inbox-bar .dot{width:11px;height:11px;border-radius:50%}
+  .inbox-bar .r{background:#ff6058}.inbox-bar .y{background:#ffbd2e}.inbox-bar .g{background:#28ca42}
+  .inbox-bar .title{margin-left:10px;font-size:.82rem;color:var(--cream-dim);letter-spacing:.04em}
+  .inbox-row{display:flex;gap:14px;padding:18px 20px;border-bottom:1px solid rgba(255,255,255,.06);transition:.25s var(--ease);align-items:flex-start}
+  .inbox-row:last-child{border-bottom:none}
+  .inbox-row.unread{background:rgba(245,196,94,.07)}
+  .inbox-row.unread .subj{color:var(--cream);font-weight:600}
+  .inbox-row.muted{opacity:.5}
+  .inbox-av{flex-shrink:0;width:38px;height:38px;border-radius:50%;display:grid;place-items:center;font-size:1rem;background:linear-gradient(135deg,var(--gold-lt),var(--gold-deep));color:var(--night-1);font-weight:700}
+  .inbox-av.gray{background:rgba(255,255,255,.12);color:var(--cream-dim)}
+  .inbox-content{flex:1;min-width:0}
+  .inbox-top{display:flex;justify-content:space-between;gap:10px;margin-bottom:3px}
+  .inbox-sender{font-size:.92rem;font-weight:600;color:var(--cream)}
+  .inbox-time{font-size:.78rem;color:var(--cream-dim);flex-shrink:0}
+  .inbox-row .subj{font-size:.9rem;color:var(--cream-dim);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .inbox-row .preview{font-size:.82rem;color:var(--cream-dim);opacity:.75;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .unread-dot{width:8px;height:8px;border-radius:50%;background:var(--gold);box-shadow:0 0 8px var(--gold);flex-shrink:0;margin-top:6px}
+
+  /* discovery */
+  .discovery{background:linear-gradient(165deg, rgba(42,52,112,.42), rgba(13,21,56,.42));border:1px solid rgba(188,185,236,.22);border-radius:26px;padding:50px;text-align:center;position:relative;overflow:hidden}
+  .discovery::before{content:"";position:absolute;top:-60px;right:-40px;width:200px;height:200px;border-radius:50%;background:radial-gradient(circle,rgba(245,196,94,.12),transparent 70%)}
+  .discovery h2{margin-bottom:18px;position:relative}
+  .discovery>p{color:var(--cream-dim);font-size:1.08rem;max-width:570px;margin:0 auto 36px;position:relative}
+  .q-cards{display:flex;flex-direction:column;gap:14px;max-width:560px;margin:0 auto;position:relative}
+  .q-card{background:rgba(6,10,28,.55);border:1px solid rgba(188,185,236,.25);border-radius:14px;padding:20px 26px;font-family:var(--display);font-style:italic;font-size:1.1rem;color:var(--cream);text-align:left;display:flex;align-items:center;gap:14px;transition:.3s var(--ease)}
+  .q-card:hover{border-color:var(--gold);transform:translateX(6px);background:rgba(6,10,28,.75)}
+  .q-card .qm{color:var(--gold);font-size:1.8rem;flex-shrink:0;font-family:var(--display);line-height:0;transform:translateY(8px)}
+
+  /* keepsake */
+  .keepsake{display:grid;grid-template-columns:1fr 1fr;gap:50px;align-items:center}
+  .keepsake h2{margin-bottom:26px}
+  .timeline{list-style:none}
+  .timeline li{font-family:var(--display);font-size:1.28rem;color:var(--cream);padding:16px 0;border-bottom:1px solid rgba(255,255,255,.08);display:flex;gap:16px;align-items:baseline}
+  .timeline li .when{color:var(--gold);font-style:italic;flex-shrink:0;width:128px}
+  .keep-box{background:linear-gradient(165deg, rgba(255,255,255,.065), rgba(255,255,255,.015));border:1px solid rgba(245,196,94,.22);border-radius:20px;padding:36px;box-shadow:0 24px 60px rgba(0,0,0,.3)}
+  .keep-box h3{font-family:var(--display);font-weight:600;font-size:1.3rem;margin-bottom:20px}
+  .keep-box ul{list-style:none}
+  .keep-box li{font-size:1rem;padding:11px 0 11px 30px;position:relative;color:var(--cream)}
+  .keep-box li::before{content:"✓";position:absolute;left:0;color:var(--gold);font-weight:700}
+  .keep-box .note{margin-top:20px;padding-top:18px;border-top:1px solid rgba(255,255,255,.08);font-size:.92rem;color:var(--lavender);font-style:italic;font-family:var(--display)}
+
+  /* pricing */
+  .tiers{display:grid;grid-template-columns:repeat(3,1fr);gap:24px;align-items:stretch}
+  .tier{background:linear-gradient(165deg, rgba(255,255,255,.055), rgba(255,255,255,.015));border:1px solid rgba(255,255,255,.08);border-radius:20px;padding:38px 30px;display:flex;flex-direction:column;transition:.35s var(--ease);position:relative}
+  .tier:hover{transform:translateY(-7px);box-shadow:0 24px 55px rgba(0,0,0,.3)}
+  .tier.featured{border-color:var(--gold);background:linear-gradient(165deg, rgba(245,196,94,.13), rgba(245,196,94,.03));box-shadow:0 24px 65px var(--amber-glow);transform:scale(1.03)}
+  .tier.featured:hover{transform:scale(1.03) translateY(-7px)}
+  .tier-badge{position:absolute;top:-13px;left:50%;transform:translateX(-50%);background:linear-gradient(135deg,var(--gold-lt),var(--gold-deep));color:var(--night-1);font-size:.72rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;padding:6px 18px;border-radius:100px;white-space:nowrap;box-shadow:0 6px 18px var(--amber-glow)}
+  .tier-name{font-family:var(--display);font-weight:600;font-size:1.5rem;margin-bottom:8px}
+  .tier-price{font-family:var(--display);font-size:2.7rem;font-weight:500;line-height:1;margin-bottom:6px}
+  .tier-price span{font-size:1rem;color:var(--cream-dim);font-family:var(--body)}
+  .tier .trial{font-size:.85rem;color:var(--gold);font-weight:600;margin-bottom:22px}
+  .tier ul{list-style:none;margin-bottom:30px;flex:1}
+  .tier li{font-size:.95rem;padding:10px 0 10px 28px;position:relative;color:var(--cream)}
+  .tier li::before{content:"✓";position:absolute;left:0;color:var(--gold);font-weight:700}
+  .tier .plus{font-size:.85rem;color:var(--lavender);font-style:italic;font-family:var(--display);padding-left:0;margin-bottom:8px}
+  .tier .plus::before{content:""}
+  .tier-btn{position:relative;text-align:center;text-decoration:none;font-weight:600;padding:15px;border-radius:100px;border:1px solid rgba(245,196,94,.4);color:var(--cream);transition:.25s;overflow:hidden}
+  .tier-btn:hover{background:rgba(245,196,94,.12);border-color:var(--gold)}
+  .tier.featured .tier-btn{background:linear-gradient(135deg,var(--gold-lt),var(--gold-deep));color:var(--night-1);border-color:var(--gold)}
+  .tier.featured .tier-btn:hover{filter:brightness(1.07)}
+
+  /* faq */
+  .faq-wrap{max-width:740px;margin:0 auto}
+  .faq-item{border-bottom:1px solid rgba(255,255,255,.1)}
+  .faq-q{width:100%;text-align:left;background:none;border:none;color:var(--cream);font-family:var(--display);font-size:1.26rem;font-weight:500;padding:25px 44px 25px 0;cursor:pointer;position:relative;transition:color .2s}
+  .faq-q:hover{color:var(--gold)}
+  .faq-q::after{content:"+";position:absolute;right:6px;top:50%;transform:translateY(-50%);color:var(--gold);font-size:1.7rem;transition:transform .35s var(--ease)}
+  .faq-item.open .faq-q::after{transform:translateY(-50%) rotate(135deg)}
+  .faq-a{max-height:0;overflow:hidden;transition:max-height .4s var(--ease),padding .4s var(--ease);color:var(--cream-dim);font-size:1.05rem}
+  .faq-item.open .faq-a{max-height:200px;padding-bottom:25px}
+
+  /* closer */
+  .closer{text-align:center;padding:110px 0;position:relative}
+  .closer h2{font-size:clamp(2.2rem,5vw,3.6rem);max-width:790px;margin:0 auto 22px}
+  .closer .csub{color:var(--cream-dim);font-size:1.1rem;margin-bottom:38px}
+  .closer .signup{margin-bottom:18px}
+  .closer .tagline-end{font-family:var(--display);font-style:italic;color:var(--gold);font-size:1.18rem;margin-top:10px}
+
+  /* footer */
+  footer{border-top:1px solid rgba(255,255,255,.08);padding:44px 0;text-align:center;color:var(--cream-dim);font-size:.88rem;position:relative;z-index:2}
+  footer .logo{justify-content:center;font-size:1.15rem;margin-bottom:14px;color:var(--cream)}
+  .tagline{font-family:var(--display);font-style:italic;color:var(--gold);margin-top:8px}
+
+  /* reveal */
+  .reveal{opacity:0;transform:translateY(30px);transition:opacity .9s var(--ease),transform .9s var(--ease)}
+  .reveal.in{opacity:1;transform:none}
+  .hero .eyebrow{animation:rise .9s .1s both}
+  .hero h1{animation:rise .9s .26s both}
+  .hero .sub{animation:rise .9s .4s both}
+  .hero .sub2{animation:rise .9s .5s both}
+  .hero .signup{animation:rise .9s .6s both}
+  .hero .reassure{animation:rise .9s .72s both}
+  .hero-card{animation:rise 1.1s .92s both}
+  @keyframes rise{from{opacity:0;transform:translateY(32px)}to{opacity:1;transform:none}}
+
+  @media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}.reveal{opacity:1;transform:none}}
+
+  @media(max-width:900px){
+    .steps{grid-template-columns:repeat(2,1fr)}
+    .proof{grid-template-columns:1fr}
+    .keepsake{grid-template-columns:1fr;gap:34px}
+    .diff2{grid-template-columns:1fr;gap:34px}
+    .email-native{grid-template-columns:1fr;gap:34px}
+    .tiers{grid-template-columns:1fr;max-width:430px;margin:0 auto}
+    .tier.featured{transform:none}
+    .tier.featured:hover{transform:translateY(-7px)}
+    .discovery{padding:36px}
+    .nav-links a:not(.nav-cta){display:none}
+    .moon{width:56px;height:56px}
+  }
+  @media(max-width:520px){
+    .steps{grid-template-columns:1fr}
+    .pad{padding:64px 0}
+    .timeline li .when{width:auto}
+    .signup{flex-direction:column}
+    .hero-card{padding:30px 26px}
+  }
+</style>
+</head>
+<body>
+<div class="sky"></div>
+<div class="horizon"></div>
+<div class="stars" id="stars"></div>
+<div class="moon" id="moon"></div>
+<div class="grain"></div>
+
+<div class="navbar" id="navbar">
+<nav>
+  <div class="logo"><span class="spark">✦</span> NightlyQuest</div>
+  <div class="nav-links">
+    <a href="#how">How It Works</a>
+    <a href="#pricing">Pricing</a>
+    <a href="#faq">FAQ</a>
+    <a href="#start" class="nav-cta">Start Free</a>
+  </div>
+</nav>
+</div>
+
+<!-- HERO -->
+<section class="hero wrap" id="start">
+  <span class="eyebrow"><span class="pulse"></span> Choose-your-own-adventure, by email</span>
+  <h1>Your child becomes the<br><em class="gold-text">hero of their own story</em></h1>
+  <p class="sub">A choose-your-own-adventure that never resets. Each night your child picks what happens next, and the story <strong style="color:var(--cream);font-weight:600">remembers every choice</strong>.</p>
+  <p class="sub2">No app to download. No screens at bedtime. It all happens by email.</p>
+  <form class="signup" onsubmit="return false">
+    <input type="email" placeholder="Enter your email address" aria-label="Email address">
+    <button class="btn-primary">Start Free <span class="arrow">→</span></button>
+  </form>
+  <p class="reassure">7-day free trial · No credit card · No app, ever</p>
+
+  <div class="hero-card asEmail">
+    <div class="email-header">
+      <div class="email-av"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7.5 9 6 9-6"/></svg></div>
+      <div class="email-meta">
+        <div class="email-from">NightlyQuest <span>· stories@nightlyquest.com</span></div>
+        <div class="email-subject">Chapter 14 · Allie's Quest 🐉</div>
+      </div>
+      <div class="email-time">7:30 PM</div>
+    </div>
+    <div class="story-window">
+      <div class="story">
+        <p>The trail climbed higher than Allie had ever dared — past frost-silvered pines and a waterfall frozen mid-fall, like glass. By the time she reached the ledge, her breath came out in little clouds.</p>
+        <p>And there it was. The mouth of the cave, glowing a soft amber from somewhere deep inside.</p>
+        <p>The little dragon she'd rescued weeks ago swooped down and settled on her shoulder, wings folding neat as a closed book. The dragon was bigger now. Warmer, too.</p>
+        <p class="whisper">"I've been waiting for you," the dragon whispered, her voice like crackling embers.</p>
+        <p>Allie scratched the ridge above the dragon's eye, the way she liked. "You found it, didn't you? The thing we've been searching for."</p>
+        <p>The dragon nodded toward the dark. And then, from far inside the mountain, came a low, slow rumble — like a giant turning over in its sleep. Loose pebbles trembled at Allie's feet…</p>
+      </div>
+    </div>
+    <div class="hc-outro">
+      <p>What should Allie do?</p>
+      <p class="opts"><b>A</b> — Step inside the glowing cave<br><b>B</b> — Follow the dragon into the dark</p>
+      <p class="cta">Just reply <b>A</b> or <b>B</b> to continue the adventure tomorrow.</p>
+    </div>
+    <div class="reply-wrap">
+      <div class="reply-box">
+        <div class="reply-head"><span class="reply-ico">↩</span><span>Reply to <b>stories@nightlyquest.com</b></span></div>
+        <div class="reply-body"><span class="reply-text" id="replyText"></span><span class="caret" id="caret"></span></div>
+        <div class="reply-foot">
+          <button class="reply-send" id="sendBtn">Send</button>
+          <div class="reply-tools"><span></span><span></span><span></span></div>
+        </div>
+      </div>
+      <div class="sent-msg" id="sentMsg"><span class="check">✓</span> Sent — Allie's next chapter arrives tomorrow 🌙</div>
+    </div>
+  </div>
+</section>
+
+<div class="divider-stars">· ✦ · ✦ · ✦ ·</div>
+
+<!-- SOCIAL PROOF -->
+<section class="pad wrap">
+  <div class="proof">
+    <div class="quote-card reveal"><div class="stars-row">★★★★★</div><p>"My daughter asks every night if her next NightlyQuest chapter has arrived."</p></div>
+    <div class="quote-card reveal"><div class="stars-row">★★★★★</div><p>"The coolest part is that the story remembers things from months ago."</p></div>
+    <div class="quote-card reveal"><div class="stars-row">★★★★★</div><p>"It became our favorite bedtime ritual."</p></div>
+  </div>
+</section>
+
+<!-- EMAIL NATIVE -->
+<section class="pad wrap">
+  <div class="email-native">
+    <div class="reveal">
+      <span class="sec-tag">No app required</span>
+      <h2>It all happens<br><em class="gold-text">in your inbox</em></h2>
+      <p class="lede">No app to download. No account to log into. No glowing tablet in their hands at bedtime. Just open your email — the place you already are every day.</p>
+      <div class="ebenefits">
+        <div class="ebenefit"><div class="ei">📥</div><div><h4>Lives where you already are</h4><p>Every chapter arrives in the inbox you check daily. Nothing new to install, update, or remember.</p></div></div>
+        <div class="ebenefit"><div class="ei">↩️</div><div><h4>Reply to choose the path</h4><p>Your child decides what happens next. You just hit reply and type A or B — the most natural interaction there is.</p></div></div>
+        <div class="ebenefit"><div class="ei">💤</div><div><h4>No screens at bedtime</h4><p>Read it aloud from your phone, or print the chapter and put the screen away entirely.</p></div></div>
+        <div class="ebenefit"><div class="ei">📱</div><div><h4>Works on everything</h4><p>Any phone, tablet, or computer. No app store, no downloads, no compatibility headaches.</p></div></div>
+      </div>
+    </div>
+    <div class="inbox reveal">
+      <div class="inbox-bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="title">Inbox</span></div>
+      <div class="inbox-row unread">
+        <div class="inbox-av">✦</div>
+        <div class="inbox-content">
+          <div class="inbox-top"><span class="inbox-sender">NightlyQuest</span><span class="inbox-time">7:30 PM</span></div>
+          <div class="subj">🐉 Chapter 14 · Allie's Quest is here</div>
+          <div class="preview">The trail climbed higher than Allie had ever dared…</div>
+        </div>
+        <span class="unread-dot"></span>
+      </div>
+      <div class="inbox-row muted">
+        <div class="inbox-av gray">✦</div>
+        <div class="inbox-content">
+          <div class="inbox-top"><span class="inbox-sender">NightlyQuest</span><span class="inbox-time">Yesterday</span></div>
+          <div class="subj">Chapter 13 · The Frozen Waterfall</div>
+          <div class="preview">You chose to follow the dragon. So that's exactly what happened…</div>
+        </div>
+      </div>
+      <div class="inbox-row muted">
+        <div class="inbox-av gray">✦</div>
+        <div class="inbox-content">
+          <div class="inbox-top"><span class="inbox-sender">NightlyQuest</span><span class="inbox-time">Tuesday</span></div>
+          <div class="subj">Chapter 12 · A Friend in the Woods</div>
+          <div class="preview">The little fox couldn't see — but somehow, it knew Allie was kind…</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- HOW IT WORKS -->
+<section class="pad wrap" id="how">
+  <div class="sec-head reveal">
+    <span class="sec-tag">How it works</span>
+    <h2>Four steps to an adventure<br>that's <em class="gold-text">theirs alone</em></h2>
+  </div>
+  <div class="steps">
+    <div class="step reveal"><div class="step-num">01</div><h3>Create their hero</h3><p>Tell us about your child — name, age, interests, favorite animals, personality, and reading level.</p></div>
+    <div class="step reveal"><div class="step-num">02</div><h3>The next chapter arrives</h3><p>Every evening, the next chapter of your child's ongoing quest lands in your inbox — picking up right where last night ended.</p></div>
+    <div class="step reveal"><div class="step-num">03</div><h3>Make a choice</h3><p>At the end of each chapter, your child chooses what happens next. Reply A or B, and tomorrow's story continues.</p></div>
+    <div class="step reveal"><div class="step-num">04</div><h3>Watch their world grow</h3><p>The story remembers:</p><ul><li>Friends they meet</li><li>Lessons they learn</li><li>Places they explore</li><li>Creatures they rescue</li><li>Choices they make</li></ul></div>
+  </div>
+</section>
+
+<!-- DIFFERENCE -->
+<section class="pad wrap">
+  <div class="sec-head reveal" style="margin-bottom:46px">
+    <span class="sec-tag">Why NightlyQuest is different</span>
+    <h2>Other apps forget by morning.<br>NightlyQuest <em class="gold-text">never forgets a chapter.</em></h2>
+  </div>
+  <div class="diff2">
+    <div class="reveal">
+      <p class="body">Most story apps spin up a brand-new, disconnected tale each night — then forget it the moment it ends. They're story <em>generators</em>.</p>
+      <div class="vs-line them"><span class="tag">Them</span><span>A fresh, forgettable story every night</span></div>
+      <div class="vs-line us"><span class="tag">Us</span><span>One continuous saga that remembers everything</span></div>
+      <p class="body">NightlyQuest writes a <strong style="color:var(--cream);font-weight:600">single, evolving quest</strong> starring your child. Every choice carries forward. The friend they make in Chapter 3 returns in Chapter 67. The dragon they rescue still remembers their name. <span class="highlight">It isn't a story generator — it's their quest, growing for years.</span></p>
+    </div>
+    <div class="journal reveal">
+      <div class="journal-head">Allie's quest · Chapter 14</div>
+      <div class="journal-item"><span class="ji">🐉</span><div>Rescued a baby dragon — now her loyal companion <span class="ch">· Chapter 6</span></div></div>
+      <div class="journal-item"><span class="ji">🦊</span><div>Befriended a blind fox in the Whispering Woods <span class="ch">· Chapter 9</span></div></div>
+      <div class="journal-item"><span class="ji">🗝️</span><div>Kept the golden key when everyone said to leave it <span class="ch">· Chapter 11</span></div></div>
+      <div class="journal-item"><span class="ji">🌟</span><div>Becoming the kind of hero who chooses kindness over power</div></div>
+      <div class="journal-next"><span class="arrow">↪</span><span>Tonight, the dragon leads her to the mountain she's never dared to climb…</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- PERSONALITY DISCOVERY -->
+<section class="pad wrap">
+  <div class="discovery reveal">
+    <span class="sec-tag">Personality discovery</span>
+    <h2>The story <em class="gold-text">learns from your child</em></h2>
+    <p>Along the way, they'll answer thoughtful questions that shape future adventures — and over time, the story adapts to their imagination, interests, and personality.</p>
+    <div class="q-cards">
+      <div class="q-card"><span class="qm">“</span>What would you do if your friend was scared?</div>
+      <div class="q-card"><span class="qm">“</span>Would you rather explore somewhere new or master a skill?</div>
+      <div class="q-card"><span class="qm">“</span>What are you proud of today?</div>
+    </div>
+  </div>
+</section>
+
+<div class="divider-stars">· ✦ · ✦ · ✦ ·</div>
+
+<!-- KEEPSAKE -->
+<section class="pad wrap">
+  <div class="keepsake">
+    <div class="reveal">
+      <span class="sec-tag">The keepsake</span>
+      <h2>A memory you<br>can <em class="gold-text">hold onto</em></h2>
+      <ul class="timeline">
+        <li><span class="when">One month</span> becomes a story.</li>
+        <li><span class="when">Six months</span> becomes a world.</li>
+        <li><span class="when">One year</span> becomes a bookshelf memory.</li>
+      </ul>
+    </div>
+    <div class="keep-box reveal">
+      <h3>At the end of every completed adventure, receive:</h3>
+      <ul>
+        <li>Print-ready PDF</li>
+        <li>Adventure timeline</li>
+        <li>A portrait of the hero they've become</li>
+        <li>Every major choice preserved</li>
+      </ul>
+      <p class="note">Premium members receive printed hardcover editions delivered to their home.</p>
+    </div>
+  </div>
+</section>
+
+<!-- PRICING -->
+<section class="pad wrap" id="pricing">
+  <div class="sec-head reveal">
+    <span class="sec-tag">Pricing</span>
+    <h2>Your first <em class="gold-text">7 nights are free</em></h2>
+    <p>A full week of nightly chapters, on us. No credit card, no commitment.</p>
+  </div>
+  <div class="tiers">
+    <div class="tier reveal">
+      <div class="tier-name">Free Trial</div>
+      <div class="tier-price">Free<span> · 7 nights</span></div>
+      <p class="trial">No card, no catch</p>
+      <ul><li>A new chapter <b>every night</b></li><li>Your child as the hero</li><li>Choose-your-own-adventure</li><li>A quest that remembers</li></ul>
+      <a href="#" class="tier-btn">Start Free Trial</a>
+    </div>
+    <div class="tier featured reveal">
+      <div class="tier-badge">Most Popular</div>
+      <div class="tier-name">Adventurer</div>
+      <div class="tier-price">$9<span>/month</span></div>
+      <p class="trial">After your free week</p>
+      <ul><li>A new chapter <b>every night</b></li><li>Full story memory & archive</li><li>Print-ready PDF keepsakes</li><li>Gentle reminders to continue</li></ul>
+      <a href="#" class="tier-btn">Go Adventure</a>
+    </div>
+    <div class="tier reveal">
+      <div class="tier-name">Legendary</div>
+      <div class="tier-price">$19<span>/month</span></div>
+      <p class="plus">Everything in Adventurer, plus:</p>
+      <ul><li>Hardcover printed books</li><li>Personalized cover artwork</li><li>Home delivery</li><li>Permanent family archive</li></ul>
+      <a href="#" class="tier-btn">Become Legendary</a>
+    </div>
+  </div>
+</section>
+
+<!-- FAQ -->
+<section class="pad wrap" id="faq">
+  <div class="sec-head reveal">
+    <span class="sec-tag">Questions</span>
+    <h2>Everything you<br>might <em class="gold-text">wonder</em></h2>
+  </div>
+  <div class="faq-wrap reveal">
+    <div class="faq-item"><button class="faq-q">Do I need a credit card to start?</button><div class="faq-a">Nope. Start your 7-day free trial with just an email — full nightly access, no card, no commitment. Subscribe only if your child wants to keep going.</div></div>
+    <div class="faq-item"><button class="faq-q">How long are the stories?</button><div class="faq-a">Each chapter takes roughly 5–10 minutes to read aloud.</div></div>
+    <div class="faq-item"><button class="faq-q">Do I need an app?</button><div class="faq-a">No. Everything happens through email.</div></div>
+    <div class="faq-item"><button class="faq-q">What if we miss a night?</button><div class="faq-a">The adventure waits. We'll send gentle reminders until you're ready to continue.</div></div>
+    <div class="faq-item"><button class="faq-q">Can I have multiple children?</button><div class="faq-a">Yes. Each child receives their own unique adventure.</div></div>
+    <div class="faq-item"><button class="faq-q">What ages is it for?</button><div class="faq-a">Designed primarily for ages 4–12.</div></div>
+  </div>
+</section>
+
+<!-- FINAL CTA -->
+<section class="closer wrap">
+  <h2 class="reveal">Every child deserves a story<br>where they're <em class="gold-text">the hero.</em></h2>
+  <p class="csub reveal">Join families building adventures they'll remember for years.</p>
+  <form class="signup reveal" onsubmit="return false">
+    <input type="email" placeholder="Enter your email address" aria-label="Email address">
+    <button class="btn-primary">Start Free <span class="arrow">→</span></button>
+  </form>
+  <p class="tagline-end reveal">The adventure begins tonight.</p>
+</section>
+
+<footer>
+  <div class="logo"><span class="spark">✦</span> NightlyQuest</div>
+  <p>Personalized bedtime adventures, delivered nightly.</p>
+  <p class="tagline">The moat is the memory. The magic is the mailbox.</p>
+</footer>
+
+<script>
+  // stars
+  const sky=document.getElementById('stars');
+  const count=window.innerWidth<600?70:140;
+  for(let i=0;i<count;i++){
+    const s=document.createElement('div');s.className='star';
+    const size=Math.random()*2.2+0.5;
+    s.style.width=s.style.height=size+'px';
+    s.style.left=Math.random()*100+'%';s.style.top=Math.random()*100+'%';
+    s.style.setProperty('--dur',(Math.random()*3+1.5)+'s');
+    s.style.animationDelay=(Math.random()*4)+'s';
+    sky.appendChild(s);
+  }
+  // fireflies
+  for(let i=0;i<7;i++){
+    const f=document.createElement('div');f.className='firefly';
+    f.style.left=Math.random()*100+'vw';f.style.top=(40+Math.random()*55)+'vh';
+    f.style.setProperty('--dx',(Math.random()*160-80)+'px');
+    f.style.setProperty('--dy',(Math.random()*-140-40)+'px');
+    f.style.setProperty('--fdur',(Math.random()*8+9)+'s');
+    f.style.animationDelay=(Math.random()*8)+'s';
+    document.body.appendChild(f);
+  }
+  // shooting stars
+  function shoot(){
+    const sh=document.createElement('div');sh.className='shooting';
+    const top=Math.random()*40,left=40+Math.random()*55;
+    sh.style.top=top+'vh';sh.style.left=left+'vw';
+    document.body.appendChild(sh);
+    sh.animate([
+      {opacity:0,transform:'translate(0,0)'},
+      {opacity:1,offset:.15},
+      {opacity:0,transform:'translate(-220px,150px)'}
+    ],{duration:1100,easing:'ease-in'});
+    setTimeout(()=>sh.remove(),1200);
+    setTimeout(shoot,4000+Math.random()*7000);
+  }
+  setTimeout(shoot,2500);
+  // nav scroll
+  const navbar=document.getElementById('navbar');
+  const moon=document.getElementById('moon');
+  window.addEventListener('scroll',()=>{
+    const y=window.scrollY;
+    navbar.classList.toggle('scrolled',y>30);
+    moon.style.transform='translateY('+(y*0.15)+'px)';
+  },{passive:true});
+  // reveal
+  const io=new IntersectionObserver((e)=>{e.forEach(x=>{if(x.isIntersecting){x.target.classList.add('in');io.unobserve(x.target)}})},{threshold:.12});
+  document.querySelectorAll('.reveal').forEach(el=>io.observe(el));
+  // story card — animated email reply demo
+  (function(){
+    const replyText=document.getElementById('replyText');
+    const caret=document.getElementById('caret');
+    const sendBtn=document.getElementById('sendBtn');
+    const sentMsg=document.getElementById('sentMsg');
+    if(!replyText||!sendBtn) return;
+    const reply="B — follow the dragon!";
+    const reduce=window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    if(reduce){
+      replyText.textContent=reply;
+      caret.style.display='none';
+      sendBtn.textContent='Sent';sendBtn.classList.add('done');
+      sentMsg.classList.add('show');
+      return;
+    }
+
+    const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+    let running=false;
+    async function run(){
+      if(running) return; running=true;
+      while(true){
+        // reset
+        replyText.textContent='';
+        caret.style.display='inline-block';
+        sentMsg.classList.remove('show');
+        sendBtn.textContent='Send';sendBtn.classList.remove('done','pressed');
+        await sleep(1600);
+        // type the reply
+        for(let i=0;i<reply.length;i++){
+          replyText.textContent+=reply[i];
+          await sleep(50+Math.random()*55);
+        }
+        await sleep(550);
+        // press send
+        sendBtn.classList.add('pressed');
+        await sleep(150);
+        sendBtn.classList.remove('pressed');
+        await sleep(120);
+        // sent state
+        caret.style.display='none';
+        sendBtn.textContent='Sent';sendBtn.classList.add('done');
+        sentMsg.classList.add('show');
+        await sleep(3000);
+      }
+    }
+    // start when the card scrolls into view
+    const card=document.querySelector('.hero-card');
+    const io2=new IntersectionObserver((e)=>{e.forEach(x=>{if(x.isIntersecting){run();io2.disconnect();}})},{threshold:.3});
+    io2.observe(card);
+  })();
+  // faq
+  document.querySelectorAll('.faq-q').forEach(b=>b.addEventListener('click',()=>{
+    const item=b.parentElement;const open=item.classList.contains('open');
+    document.querySelectorAll('.faq-item').forEach(i=>i.classList.remove('open'));
+    if(!open)item.classList.add('open');
+  }));
+</script>
+</body>
+</html>
